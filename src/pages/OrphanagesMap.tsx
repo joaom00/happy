@@ -1,15 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiPlus } from 'react-icons/fi';
-import { MapContainer, TileLayer } from 'react-leaflet';
-
-import 'leaflet/dist/leaflet.css';
-
-import mapMarkerImg from '../images/map-marker.svg';
+import { FiPlus, FiArrowRight } from 'react-icons/fi';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import api from '../services/api';
 
 import '../styles/pages/orphanages-map.css';
 
-function OrphanagesMap() {
+import mapMarkerImg from '../images/map-marker.svg';
+import mapIcon from '../utils/mapIcon';
+
+interface Orphanage {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+const OrphanagesMap = () => {
+  const [orphanages, setOrphanages] = useState<Orphanage[]>([]);
+
+  useEffect(() => {
+    api.get('orphanages').then((response) => {
+      setOrphanages(response.data);
+    });
+  }, []);
+
   return (
     <div id="page-map">
       <aside>
@@ -27,20 +42,42 @@ function OrphanagesMap() {
       </aside>
 
       <MapContainer
-        center={[-3.8417389, -38.4955035]}
+        center={[-3.836388, -38.487619]}
         zoom={15}
         style={{ width: '100%', height: '100%' }}
       >
         <TileLayer
           url={`https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{z}/{x}/{y}?access_token=${process.env.REACT_APP_MAPBOX_TOKEN}`}
         />
+
+        {orphanages.map((orphanage) => {
+          return (
+            <Marker
+              key={orphanage.id}
+              position={[orphanage.latitude, orphanage.longitude]}
+              icon={mapIcon}
+            >
+              <Popup
+                closeButton={false}
+                minWidth={240}
+                maxWidth={240}
+                className="map-popup"
+              >
+                {orphanage.name}
+                <Link to={`orphanages/${orphanage.id}`}>
+                  <FiArrowRight size={20} color="#fff" />
+                </Link>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
 
-      <Link to="" className="create-orphanage">
+      <Link to="/orphanages/create" className="create-orphanage">
         <FiPlus size={32} color="#fff" />
       </Link>
     </div>
   );
-}
+};
 
 export default OrphanagesMap;
